@@ -1,0 +1,41 @@
+
+    {
+      "ID": "INV12395",
+      "IssueDate": "2024-12-10",
+      "IssueTime": "15:30:00Z",
+      "InvoiceTypeCode": "01",
+      "InvoiceTotal": 18.02,
+      "DocumentCurrencyCode": "MYR",
+      "CustomerParty": {
+        "LegalName": "IDEMITSU ADVANCED MATERIALS SDN. BHD.",
+  "CustomerTIN": "C58715578070",
+  "CustomerBRN": "202401018720",
+  "CityName": "Kuala Lumpur",
+  "PostalZone": "50480",
+  "CountrySubentityCode": "14",
+  "AddressLines": [
+    "Jalan Alor",
+    "Kuala Lumpur",
+    "KL"
+  ],
+  "CountryCode": "MYS",
+  "Telephone": "+60-123456789"
+      },
+      "InvoiceLines": [
+        {
+          "Description": "Laptop Peripherals",
+          "InvoicedQuantity": 1,
+          "PriceAmount": 17,
+"TaxType": "02",
+"TaxRate": 0.06,
+   "TaxExemptionReason": "None",
+
+          "LineTaxes": [{
+            "TaxType": "1",
+            "TaxExemptionReason": "None",
+            "TaxRate": "0.06"
+          }],
+          "ClassificationCode": "001"
+        }
+      ]
+    }

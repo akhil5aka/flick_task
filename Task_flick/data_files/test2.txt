@@ -1,0 +1,35 @@
+
+    {
+      "ID": "INV12345",
+      "IssueDate": "2024-01-26",
+      "IssueTime": "15:30:00Z",
+      "InvoiceTypeCode": "01",
+      "InvoiceTotal": 18.02,
+      "DocumentCurrencyCode": "MYR",
+      "CustomerParty": {
+        "LegalName": "Hebat Group",
+        "CustomerTIN": "C25845632100",
+        "CustomerBRN":"202121111111",
+        "CityName": "Kuala Lumpur",
+        "PostalZone": "50480",
+        "CountrySubentityCode": "14",
+        "AddressLines": [
+          "Lot 66"
+        ],
+        "CountryCode": "MYS",
+        "Telephone": "+60-123456789"
+      },
+      "InvoiceLines": [
+        {
+          "Description": "Laptop Peripherals",
+          "InvoicedQuantity": 1,
+          "PriceAmount": 17,
+          "LineTaxes": [{
+            "TaxType": "01",
+            "TaxExemptionReason": "None",
+            "TaxRate": 0.06
+          }],
+          "ClassificationCode": "001"
+        }
+      ]
+    }

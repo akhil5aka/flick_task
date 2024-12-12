@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model employees {
+  id       Int      @id @default(autoincrement())
+  name     String?  @db.VarChar(100)
+  position String?  @db.VarChar(50)
+  salary   Decimal? @db.Decimal
+}
+
+model tb_invoice {
+  id             Int     @id @default(autoincrement())
+  invoice_number String? @db.VarChar(200)
+  uuid           String? @unique(map: "unique_uuid") @db.VarChar(200)
+  status         String? @db.VarChar(100)
+  submissionuid  String? @db.VarChar(400)
+  longid         String? @db.VarChar(400)
+  doc_reasson    String? @db.VarChar(400)
+}
+
+model tb_name {
+  name  String? @db.VarChar(100)
+  email String? @db.VarChar(100)
+  id    Int     @id @default(autoincrement())
+}
