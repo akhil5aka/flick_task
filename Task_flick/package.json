@@ -4,15 +4,15 @@
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www",
-    "normalinvoice":"node Cli.js normal",
-    "getstatus":"node Cli.js getstatus",
-    "cancelinvoice":"node CLi.js cancelinvoice"
+    "normalinvoice": "node Cli.js normal",
+    "getstatus": "node Cli.js getstatus",
+    "cancelinvoice": "node CLi.js cancelinvoice"
   },
   "dependencies": {
-    
     "@prisma/client": "^6.0.1",
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
+    "chokidar": "^4.0.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "^4.21.2",
