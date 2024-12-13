@@ -58,7 +58,7 @@ module.exports = {
       // Event: When a new file is added
       watcher.on("add", async (filePath) => {
         console.log(`File added: ${filePath}`);
-        if (path.extname(filePath) === ".txt") {
+        if (path.extname(filePath) === ".json") {
           try {
             // Reading file 
             var fileContent = await fs.readFile(filePath, "utf8");
