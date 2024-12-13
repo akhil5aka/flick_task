@@ -41,7 +41,7 @@ module.exports = {
       const apiResponses = [];
       const testUrl = "https://sandbox-my.flick.network/api/einvoice/generate/invoice";
 
-      // Path to the folder containing .txt files
+      // Path to the folder containing .json files
       const folderPath = path.resolve(
         process.cwd(),
         "/Users/Akhil/Desktop/Task_flick/data_files"
@@ -163,7 +163,7 @@ module.exports = {
             console.error(`Error processing file ${filePath}:`, fileError);
           }
         } else {
-          console.log("Ignoring non-txt file:", filePath);
+          console.log("Ignoring non-json file:", filePath);
         }
       });
 
