@@ -23,6 +23,13 @@ switch (command) {
     console.log("canceling the invoice with uuid :",additionalArgs[0],"and with status :",status);
     CancelInvoice.cancel_invoice(additionalArgs[0],status)
     break;
+
+    case "selfbilled":
+      console.log("Running self billed");
+      Selfbilled.self_billed_invoice();
+      break;
+
+      
   default:
     console.error('Unknown command. Use "node cli.js normal" to execute.');
     process.exit(1); // Exit with an error code for unknown commands

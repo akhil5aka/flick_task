@@ -6,7 +6,9 @@
     "start": "nodemon ./bin/www",
     "normalinvoice": "node Cli.js normal",
     "getstatus": "node Cli.js getstatus",
-    "cancelinvoice": "node CLi.js cancelinvoice"
+    "cancelinvoice": "node CLi.js cancelinvoice",
+    "selfbilled":"node Cli.js selfbilled"
+
   },
   "dependencies": {
     "@prisma/client": "^6.0.1",

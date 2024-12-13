@@ -5,7 +5,19 @@ const path = require("path");
 const { z } = require("zod"); // Import Zod library
 
 const prisma = new PrismaClient(); // Ensure Prisma client is initialized
-
+const SupplierPartySchema = z.object({
+  LegalName: z.string().nonempty("LegalName is mandatory"),
+  SupplierTIN: z.string().nonempty("SupplierTIN is mandatory"),
+  SupplierBRN: z.string(),
+  CityName: z.string().nonempty("CityName is mandatory"),
+  PostalZone: z.string(),
+  CountrySubentityCode: z.string(),
+  AddressLines: z.array(z.string()),
+  CountryCode: z.string(),
+  Telephone: z.string(),
+  MSICCode: z.string(),
+  Industry: z.string(),
+});
 // Define Zod schema for validation
 const invoiceSchema = z.object({
   ID: z
@@ -29,16 +41,18 @@ const invoiceSchema = z.object({
       "IssueTime must be in HH-MM-ssZ format"
     ),
     InvoiceTypeCode: z.string().nonempty("Invoice type code is mandatory"),
-    InvoiceTotal:z.string().nonempty("Invoice Total required"),
+    InvoiceTotal:z .number({ required_error: "Amount is required" })
+    .positive("Amount must be greater than 0"),
     DocumentCurrencyCode:z.string().nonempty("DocumentCurrencyCode is required"),
-    TaxExchangeRate:z.string().nonempty("TaxExchangeRate is required"),
-    SupplierTIN:z.string().nonempty("SupplierTIN is mandatory zod error")
+    TaxExchangeRate:z .number({ required_error: "Amount is required" })
+    .positive("Amount must be greater than 0"),
+    SupplierParty: SupplierPartySchema,
     
 
 });
 
 module.exports = {
-  self_billed_invoice: async (req, res) => {
+  self_billed_invoice: async () => {
     try {
       const apiResponses = [];
       const testUrl =
@@ -163,10 +177,12 @@ module.exports = {
         }
       }
 
-      res.status(200).json({
-        message: "All files processed",
-        apiResponses,
-      });
+      // res.status(200).json({
+      //   message: "All files processed",
+      //   apiResponses,
+      // });
+
+      console.log("All files processed api response",apiResponses)
     } catch (err) {
       console.log(err);
     }
