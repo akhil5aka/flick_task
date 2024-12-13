@@ -1,11 +1,14 @@
-const { PrismaClient } = require("@prisma/client");
-const axios = require("axios").default;
-const fs = require("fs").promises; // Using promises-based API
-const path = require("path");
-const { z } = require("zod"); // Import Zod library
+var { PrismaClient } = require("@prisma/client");
+var axios = require("axios").default;
+var fs = require("fs").promises;
+var path = require("path");
+var { z } = require("zod");
+var chokidar = require("chokidar");
 
-const prisma = new PrismaClient(); // Ensure Prisma client is initialized
-const SupplierPartySchema = z.object({
+var prisma = new PrismaClient();
+
+// Define Zod schema for SupplierParty
+var SupplierPartySchema = z.object({
   LegalName: z.string().nonempty("LegalName is mandatory"),
   SupplierTIN: z.string().nonempty("SupplierTIN is mandatory"),
   SupplierBRN: z.string(),
@@ -18,122 +21,94 @@ const SupplierPartySchema = z.object({
   MSICCode: z.string(),
   Industry: z.string(),
 });
-// Define Zod schema for validation
-const invoiceSchema = z.object({
-  ID: z
-    .string()
-    .min(1, "ID is mandatory")
-    .max(50, "ID must not exceed 50 characters"),
+
+// Zod schema for invoice checks 
+var invoiceSchema = z.object({
+  ID: z.string().min(1, "ID is mandatory").max(50, "ID must not exceed 50 characters"),
   IssueDate: z
     .string()
-    .refine(
-      (date) => /^\d{4}-\d{2}-\d{2}$/.test(date),
-      "IssueDate must be in YYYY-MM-DD format"
-    )
-    .refine(
-      (date) => !isNaN(new Date(date).getTime()),
-      "IssueDate must be a valid date"
-    ),
+    .refine((date) => /^\d{4}-\d{2}-\d{2}$/.test(date), "IssueDate must be in YYYY-MM-DD format")
+    .refine((date) => !isNaN(new Date(date).getTime()), "IssueDate must be a valid date"),
   IssueTime: z
     .string()
-    .refine(
-      (time) => /^\d{2}:\d{2}:\d{2}Z$/.test(time),
-      "IssueTime must be in HH-MM-ssZ format"
-    ),
-    InvoiceTypeCode: z.string().nonempty("Invoice type code is mandatory"),
-    InvoiceTotal:z .number({ required_error: "Amount is required" })
-    .positive("Amount must be greater than 0"),
-    DocumentCurrencyCode:z.string().nonempty("DocumentCurrencyCode is required"),
-    TaxExchangeRate:z .number({ required_error: "Amount is required" })
-    .positive("Amount must be greater than 0"),
-    SupplierParty: SupplierPartySchema,
-    
-
+    .refine((time) => /^\d{2}:\d{2}:\d{2}Z$/.test(time), "IssueTime must be in HH-MM-ssZ format"),
+  InvoiceTypeCode: z.string().nonempty("Invoice type code is mandatory"),
+  InvoiceTotal: z.number({ required_error: "InvoiceTotal is required" }).positive("Amount must be greater than 0"),
+  DocumentCurrencyCode: z.string().nonempty("DocumentCurrencyCode is required"),
+  TaxExchangeRate: z.number({ required_error: "TaxExchangeRate is required" }).positive("Amount must be greater than 0"),
+  SupplierParty: SupplierPartySchema,
 });
 
 module.exports = {
   self_billed_invoice: async () => {
     try {
-      const apiResponses = [];
-      const testUrl =
-        "https://sandbox-my.flick.network/api/einvoice/generate/self-billed-invoice";
+      var apiResponses = [];
+      var testUrl = "https://sandbox-my.flick.network/api/einvoice/generate/self-billed-invoice";
 
-      // Path to the folder containing .txt files
-      const folderPath = path.resolve(
-        process.cwd(),
-        "/Users/Akhil/Desktop/Task_flick/self_billed"
-      );
-
+      // Path to the folder 
+      var folderPath = path.resolve(process.cwd(), "/Users/Akhil/Desktop/Task_flick/self_billed");
       console.log(folderPath, "Resolved folder path");
 
-      // Read all files in the folder
-      const files = await fs.readdir(folderPath);
+      // Initialize chokidar to watch the folder
+      var watcher = chokidar.watch(folderPath, {
+        ignored: /(^|[\/\\])\../, // Ignore dotfiles
+        persistent: true,
+      });
 
-      // Filter only `.txt` files
-      const textFiles = files.filter((file) => path.extname(file) === ".txt");
-
-      console.log("Text files:", textFiles);
-
-      for (const textFile of textFiles) {
-        const filePath = path.join(folderPath, textFile);
-
-        try {
-          const fileContent = await fs.readFile(filePath, "utf8");
-          const jsonData = JSON.parse(fileContent);
-
-          // Validate the JSON data using Zod
+      // Event: When a new file is added
+      watcher.on("add", async (filePath) => {
+        console.log(`File added: ${filePath}`);
+        if (path.extname(filePath) === ".txt") {
           try {
-            invoiceSchema.parse(jsonData); // Throws an error if validation fails
-            console.log(`Data from ${textFile} passed validation`);
-          } catch (validationError) {
-            console.error(
-              `Validation failed for ${textFile}:`,
-              validationError.errors
-            );
+            // Reading file 
+            var fileContent = await fs.readFile(filePath, "utf8");
+            var jsonData = JSON.parse(fileContent);
 
-            // Skip processing this file due to validation failure
+            // console.log(jsonData)
+
+            // Validate the JSON data using Zod
+            try {
+              invoiceSchema.parse(jsonData);
+              console.log(`Data from ${filePath} passed validation`);
+            } catch (validationError) {
+              console.error(`Validation failed for ${filePath}:`, validationError.errors);
+              apiResponses.push({
+                file: filePath,
+                status: "validation_error",
+                error: validationError.errors,
+              });
+              return; // Skip   file
+            }
+
+
+            console.log("inbsfsbfib fifidfui")
+            // Send data to the API
+            var options = {
+              method: "POST",
+              url: testUrl,
+              headers: {
+                "Content-Type": "application/json",
+                "x-flick-auth-key": "tristarHOdyTerE5ZgPP5WEKndDVbqZMKHIeFgk52x8tASKMB",
+                supplier_uuid: "0193af5d-4ee9-7c63-8367-4a3b5bcdbbe1",
+              },
+              data: jsonData,
+            };
+
+            var response = await axios.request(options);
+
             apiResponses.push({
-              file: textFile,
-              status: "validation_error from zod",
-              error: validationError.errors,
+              file: filePath,
+              status: "success",
+              response: response.data,
             });
-            continue;
-          }
 
-          const options = {
-            method: "POST",
-            url: testUrl,
-            headers: {
-              "Content-Type": "application/json",
-              "x-flick-auth-key":
-                "tristarHOdyTerE5ZgPP5WEKndDVbqZMKHIeFgk52x8tASKMB",
-              supplier_uuid: "0193af5d-4ee9-7c63-8367-4a3b5bcdbbe1",
-            },
-            data: jsonData,
-          };
+            var uuid = response.data.data.submissionResponse.acceptedDocuments[0].uuid;
+            var submissionUid = response.data.data.submissionResponse.submissionUid;
+            var invoice_number = response.data.data.submissionResponse.acceptedDocuments[0].invoiceCodeNumber;
+            var invoice_status = response.data.status;
 
-          const response = await axios.request(options);
-
-          apiResponses.push({
-            file: textFile,
-            status: "success",
-            response: response.data,
-          });
-
-          const uuid =
-            response.data.data.submissionResponse.acceptedDocuments[0].uuid;
-
-          var submissionUid =
-            response.data.data.submissionResponse.submissionUid;
-          const invoice_number =
-            response.data.data.submissionResponse.acceptedDocuments[0]
-              .invoiceCodeNumber;
-          const invoice_status = response.data.status;
-
-          try {
-            // await wait(5000);
-
-            const existingRecord = await prisma.tb_invoice.findMany({
+            // Check and insert into db
+            var existingRecord = await prisma.tb_invoice.findMany({
               where: { uuid: uuid },
               select: {
                 invoice_number: true,
@@ -143,8 +118,7 @@ module.exports = {
 
             if (existingRecord.length === 0) {
               console.log("No existing record found. Inserting new record...");
-
-              const newRecord = await prisma.tb_invoice.create({
+              var newRecord = await prisma.tb_invoice.create({
                 data: {
                   invoice_number: invoice_number,
                   uuid: uuid,
@@ -152,39 +126,32 @@ module.exports = {
                   submissionuid: submissionUid,
                 },
               });
-
               console.log("New record inserted successfully:", newRecord);
             } else {
               console.log("Record already exists for UUID:", uuid);
             }
-          } catch (dbError) {
-            console.error("Error during database operation:", dbError);
-            if (dbError.code === "P2002") {
-              console.error(
-                "Unique constraint violation on:",
-                dbError.meta.target
-              );
-            } else {
-              console.error("Error details:", dbError.message);
-            }
+          } catch (error) {
+            console.error(`Error processing file ${filePath}:`, error.message);
+            apiResponses.push({
+              file: filePath,
+              status: "error",
+              error: error.response?.data || error.message,
+            });
           }
-        } catch (apiError) {
-          apiResponses.push({
-            file: textFile,
-            status: "error",
-            error: apiError.response?.data || apiError.message,
-          });
         }
-      }
+      });
 
-      // res.status(200).json({
-      //   message: "All files processed",
-      //   apiResponses,
-      // });
+      console.log("File watcher initialized. Waiting for new files...");
 
-      console.log("All files processed api response",apiResponses)
+      //shutdown
+      process.on("SIGINT", async () => {
+        console.log("Shutting down file watcher...");
+        await prisma.$disconnect();
+        watcher.close();
+        process.exit();
+      });
     } catch (err) {
-      console.log(err);
+      console.error("Error initializing self_billed_invoice:", err);
     }
   },
 };
