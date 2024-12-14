@@ -1,11 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
 const axios = require("axios").default;
-const fs = require("fs").promises; 
+const fs = require("fs").promises; // Using promises-based API
 const path = require("path");
-const { z } = require("zod"); 
-const chokidar = require("chokidar"); 
+const { z } = require("zod"); // Import Zod library
+const chokidar = require("chokidar"); // Import chokidar
 
-const prisma = new PrismaClient(); // Prisma client  initialized
+const prisma = new PrismaClient(); // Ensure Prisma client is initialized
 
 // Define Zod schema for validation
 const invoiceSchema = z.object({
@@ -39,12 +39,18 @@ module.exports = {
   normal_submition: async () => {
     try {
       const apiResponses = [];
-      const testUrl = "https://sandbox-my.flick.network/api/einvoice/generate/invoice";
+      const testUrl =
+        "https://sandbox-my.flick.network/api/einvoice/generate/invoice";
 
       // Path to the folder containing .json files
       const folderPath = path.resolve(
         process.cwd(),
         "/Users/Akhil/Desktop/Task_flick/data_files"
+      );
+
+      var outputFile_folder = path.resolve(
+        process.cwd(),
+        "/Users/Akhil/Desktop/Task_flick/normal_billed_output"
       );
 
       console.log(folderPath, "Resolved folder path");
@@ -57,7 +63,7 @@ module.exports = {
 
       console.log("Watching for file changes in:", folderPath);
 
-      // Event: file is added
+      // Event: When a new file is added
       watcher.on("add", async (filePath) => {
         console.log(`File added: ${filePath}`);
         if (path.extname(filePath) === ".json") {
@@ -67,7 +73,7 @@ module.exports = {
 
             // Validate the JSON data using Zod
             try {
-              invoiceSchema.parse(jsonData); 
+              invoiceSchema.parse(jsonData); // Throws an error if validation fails
               console.log(`Data from ${filePath} passed validation`);
             } catch (validationError) {
               console.error(
@@ -99,24 +105,98 @@ module.exports = {
             };
 
             try {
+              var uuid = null;
+              var submissionUid = null;
+
+              var invoice_number = null;
+
+              var invoice_status = null;
+
               const response = await axios.request(options);
-              console.log("API response received:", response.data);
+              // console.log("API response received:", response.data.data.submissionResponse.rejectedDocuments[0].error);
 
-              const uuid =
-                response.data.data.submissionResponse.acceptedDocuments[0].uuid;
-              const submissionUid =
-                response.data.data.submissionResponse.submissionUid;
-              const invoice_number =
-                response.data.data.submissionResponse.acceptedDocuments[0]
-                  .invoiceCodeNumber;
-              const invoice_status = response.data.status;
+              if (
+                response?.data?.data?.submissionResponse
+                  ?.acceptedDocuments?.[0] &&
+                "uuid" in
+                  response.data.data.submissionResponse.acceptedDocuments[0]
+              ) {
+                uuid =
+                  response.data.data.submissionResponse.acceptedDocuments[0]
+                    .uuid;
+                submissionUid =
+                  response.data.data.submissionResponse.submissionUid;
+                invoice_number =
+                  response.data.data.submissionResponse.acceptedDocuments[0]
+                    .invoiceCodeNumber;
+                invoice_status = response.data.status;
 
-              console.log("Data extracted from API response:", {
-                uuid,
-                submissionUid,
-                invoice_number,
-                invoice_status,
-              });
+                console.log("UUID exists:", uuid);
+
+                console.log(uuid, "uuid in response");
+                // Save the last response to a file
+
+                var outputFilePath = path.join(
+                  outputFile_folder,
+                  invoice_number + ".json"
+                );
+                await fs.writeFile(
+                  outputFilePath,
+                  JSON.stringify(
+                    {
+                      uuid,
+                      submissionUid,
+                      invoice_number,
+                      invoice_status,
+                    },
+                    null,
+                    2
+                  ),
+                  "utf8"
+                );
+                console.log(`Last response saved to ${outputFilePath}`);
+
+                console.log("Data extracted from API response:", {
+                  uuid,
+                  submissionUid,
+                  invoice_number,
+                  invoice_status,
+                });
+              } else {
+                console.log("UUID does not exist in the response");
+                console.log("invoice id ", jsonData.ID);
+                const rejectedErrorMessage =
+                  response.data.data.submissionResponse.rejectedDocuments?.[0]
+                    ?.error?.details?.[0]?.message || "Unknown error";
+                console.error(
+                  "Invoice submission rejected:",
+                  rejectedErrorMessage
+                );
+                console.log(
+                  "API response received:",
+                  response.data.data.submissionResponse.rejectedDocuments[0]
+                    .error.details[0].message
+                );
+
+                var outputFilePath = path.join(
+                  outputFile_folder,
+                  jsonData.ID + "error" + ".json"
+                );
+                await fs.writeFile(
+                  outputFilePath,
+                  JSON.stringify(
+                    {
+                      file: filePath,
+                      error: rejectedErrorMessage,
+                      invoice_id: jsonData.ID,
+                    },
+                    null,
+                    2
+                  ),
+                  "utf8"
+                );
+                console.log(`Last response saved to ${outputFilePath}`);
+              }
 
               try {
                 const existingRecord = await prisma.tb_invoice.findMany({
@@ -125,7 +205,9 @@ module.exports = {
                 });
 
                 if (existingRecord.length === 0) {
-                  console.log("No existing record found. Inserting new record...");
+                  console.log(
+                    "No existing record found. Inserting new record..."
+                  );
 
                   const newRecord = await prisma.tb_invoice.create({
                     data: {
@@ -152,7 +234,10 @@ module.exports = {
                 }
               }
             } catch (apiError) {
-              console.error("Error in API call:", apiError.response?.data || apiError.message);
+              console.error(
+                "Error in API call:",
+                apiError.response?.data || apiError.message
+              );
               apiResponses.push({
                 file: filePath,
                 status: "error",
@@ -169,7 +254,7 @@ module.exports = {
 
       console.log("Watching folder for changes...");
 
-      // disconnect
+      // shutdown
       process.on("SIGINT", async () => {
         console.log("Shutting down file watcher...");
         await prisma.$disconnect();
