@@ -81,7 +81,7 @@ module.exports = {
             }
 
 
-            console.log("inbsfsbfib fifidfui")
+            // console.log("in")
             // Send data to the API
             var options = {
               method: "POST",
