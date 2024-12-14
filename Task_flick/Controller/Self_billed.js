@@ -107,6 +107,24 @@ module.exports = {
             var invoice_number = response.data.data.submissionResponse.acceptedDocuments[0].invoiceCodeNumber;
             var invoice_status = response.data.status;
 
+
+             // Save the last response to a file
+             var outputFile_folder =  path.resolve(
+              process.cwd(),
+              "/Users/Akhil/Desktop/Task_flick/self_billed_output"
+            );
+            var outputFilePath = path.join(outputFile_folder, invoice_number+".json");
+            await fs.writeFile(
+              outputFilePath,
+              JSON.stringify(apiResponses[apiResponses.length - 1], null, 2),
+              "utf8"
+            );
+            console.log(`Last response saved to ${outputFilePath}`);
+
+
+
+
+
             // Check and insert into db
             var existingRecord = await prisma.tb_invoice.findMany({
               where: { uuid: uuid },
