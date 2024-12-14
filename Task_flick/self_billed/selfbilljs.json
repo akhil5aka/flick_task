@@ -1,6 +1,6 @@
 
      {
-      "ID": "SBINV-14006",
+      "ID": "SBINV-14014",
       "IssueDate": "2024-12-11",
       "IssueTime": "01:40:00Z",
       "InvoiceTypeCode": "11",
@@ -11,7 +11,7 @@
       "Incoterms": "CIF",
       "SupplierParty": {
         "LegalName": "Amazon Inc",
-        "SupplierTIN": "",
+        "SupplierTIN": "C58715578070",
         "SupplierBRN": "NA",
         "CityName": "Seattle",
         "PostalZone": "50000",
